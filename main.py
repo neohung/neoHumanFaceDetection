@@ -1,3 +1,18 @@
+# coding=UTF-8
+############################################################################
+#    Copyright 2015 Neo Hung
+#    This file is part of neoHumanFacedetection
+#    This library is free software; you can redistribute it and/or
+#    modify it under the terms of the GNU Lesser General Public
+#    License as published by the Free Software Foundation; either
+#    version 2.1 of the License, or (at your option) any later version.
+#    This library is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+#    Lesser General Public License for more details.
+#    <http://www.gnu.org/licenses/>
+############################################################################
+
 import numpy
 import cv2 as cv
 import os
@@ -5,68 +20,65 @@ from PyQt4 import QtCore, QtGui
 import time
 from sys import stdin, exit, argv
 import logging
-import qt_image_display
-from frame_grabber import FrameGrabberFile
+#import qt_image_display
+import QImageUtils
+from CamGrabber import CamFrame
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger( __name__ )
 
 class neoHumanFaceWindow(QtGui.QWidget):
-    def keyPressEvent(self, event):
-	#logger.debug("key event="+str(event.key()))
-        if event.key() == QtCore.Qt.Key_Escape:
-            self.__active_box.setChecked(False)
-        elif event.key() == 65:
-	    logger.debug("key event="+str(event.key()))
-
     def __init__(self, neo_head_tracker, parent=None):
         super(neoHumanFaceWindow, self).__init__()
         self.initUI()
     def initUI(self):
         self.setGeometry(300, 300, 640, 480)
         self.setWindowTitle('neoHumanFace Window')
-	self.__display =  qt_image_display.ImageDisplayAndRecord()
-	self.createRecordButton()
-	self.createFileButton()
-	self.createDetectButton()
-	self.createTrackingCheckBox()
-	self.createActivateCheckBox()
-	self.createScrollBar()
-	self.createScaleSelectDoubleSpinBox()
-	self.createDeviceComboBox()
-	self.createQuitButton()
-	#self.createButton()
-	#self.createLabel()
-	#self.createSlider()
-	self.layout()
-	self.__frame_grabber_file=  FrameGrabberFile("out.avi")
-	self.createTimer()
+        #self.__display =  qt_image_display.ImageDisplayAndRecord()    
+        self.display =  QImageUtils.QImageDisplay()    
+        self.createRecordButton()    
+        self.createFileButton()    
+        self.createDetectButton()    
+        self.createTrackingCheckBox()    
+        self.createActivateCheckBox()    
+        self.createScrollBar()    
+        self.createScaleSelectDoubleSpinBox()    
+        self.createDeviceComboBox()    
+        self.createQuitButton()    
+        #self.createButton()    
+        #self.createLabel()    
+        #self.createSlider()    
+        self.layout()    
+        #self.__frame_grabber_file=  FrameGrabberFile("out.avi")    
+        self.__frame_grabber_file=  CamFrame()    
+        self.createTimer()
     def createRecordButton(self): 
-        self.__record_button = QtGui.QPushButton(self)
-	#self.__record_button.setGeometry(0, 450, 80, 30)
+        self.__record_button = QtGui.QPushButton(self)        #self.__record_button.setGeometry(0, 450, 80, 30)
         self.__record_button.setCheckable(True)
         self.__record_button.setObjectName("recordButton")
         self.__record_button.setText("Record")
         self.connect( self.__record_button, QtCore.SIGNAL("clicked(bool)"),  self.recordSlot )
     def createFileButton(self): 
-        self.__file_button = QtGui.QPushButton(self)
-	#self.__file_button.setGeometry(100, 450, 80, 30)
+        self.__file_button = QtGui.QPushButton(self)    #self.__file_button.setGeometry(100, 450, 80, 30)
         self.__file_button.setCheckable(True)
         self.__file_button.setObjectName("fileButton")
         self.__file_button.setText("Display .avi")
         self.connect( self.__file_button, QtCore.SIGNAL("clicked(bool)"),  self.fileSlot )
     def createDetectButton(self): 
-        self.__face_button = QtGui.QPushButton(self)
-	#self.__face_button.setGeometry(200, 450, 80, 30)
+        self.__face_button = QtGui.QPushButton(self)    #self.__face_button.setGeometry(200, 450, 80, 30)
         self.__face_button.setCheckable(True)
         self.__face_button.setObjectName("detectButton")
         self.__face_button.setText("Detect faces")
-    def recordSlot(self, checked):
-	if checked:
-		filename = QtGui.QFileDialog.getSaveFileName( self, "Select output file",os.getcwd(), "Avi Files(*.avi)")
-		self.__record_button.setText("Recording...")
-	else:
-		self.__record_button.setText("Record")
+    def recordSlot(self, checked):    
+        if checked:    	
+            #filename = QtGui.QFileDialog.getSaveFileName( self, "Select output file",os.getcwd(), "Avi Files(*.avi)")    	
+            self.__record_button.setText("Recording...")  
+            self.__frame_grabber_file.open(-1)
+            self.__timer.start( 20 )  
+        else:    	
+            self.__record_button.setText("Record")
+            self.__timer.stop()
+            self.__frame_grabber_file.release()
     def fileSlot(self, checked):
         if checked:
             filename = QtGui.QFileDialog.getOpenFileName( self, "Select output file",os.getcwd(), "Avi Files (*.avi)")
@@ -85,8 +97,8 @@ class neoHumanFaceWindow(QtGui.QWidget):
         self.__active_box.setChecked(False)
         self.__active_box.setObjectName("activeBox")
         self.__active_box.setText("Activate Cursor Control (ESC to exit)")
-    def createScrollBar(self):
-	self.__scrollbar_gain_x = QtGui.QScrollBar()
+    def createScrollBar(self):    
+        self.__scrollbar_gain_x = QtGui.QScrollBar()
         #self.__scrollbar_gain_x.setGeometry(QtCore.QRect(0, 190, 291, 20))
         self.__scrollbar_gain_x.setMinimum(1)
         self.__scrollbar_gain_y = QtGui.QScrollBar()
@@ -109,8 +121,8 @@ class neoHumanFaceWindow(QtGui.QWidget):
         self.__label_gain_y.setText(QtCore.QString("Y gain"))
     def createScaleSelectDoubleSpinBox(self):
         self.__scale_label = QtGui.QLabel()
-        self.__scale_label.setText(QtCore.QString("Image scale"))
-	self.__scale_select = QtGui.QDoubleSpinBox()
+        self.__scale_label.setText(QtCore.QString("Image scale"))    
+        self.__scale_select = QtGui.QDoubleSpinBox()
         self.__scale_select.setFocusPolicy(QtCore.Qt.ClickFocus)
         self.__scale_select.setMaximum(1.0)
         self.__scale_select.setMinimum(0.1)
@@ -125,25 +137,25 @@ class neoHumanFaceWindow(QtGui.QWidget):
         for n in range(0, 6):
             self.__device.addItem(QtCore.QString(str(n)), QtCore.QVariant(n))
         self.__device.setCurrentIndex(0)
-    def createQuitButton(self):
-	self.__quit_button = QtGui.QPushButton('Quit', self)
+    def createQuitButton(self):    
+        self.__quit_button = QtGui.QPushButton('Quit', self)
         self.__quit_button.clicked.connect(QtCore.QCoreApplication.instance().quit)
         self.__quit_button.resize(self.__quit_button.sizeHint())
-    def createSlider(self):
-	slider = QtGui.QSlider(QtCore.Qt.Horizontal, self)
+    def createSlider(self):    
+        slider = QtGui.QSlider(QtCore.Qt.Horizontal, self)
         slider.setFocusPolicy(QtCore.Qt.NoFocus)
         #slider.setGeometry(30, 40, 100, 30)
         slider.valueChanged.connect(self.changeValue)
-    def createLabel(self):
-	self.label = QtGui.QLabel(self)
+    def createLabel(self):    
+        self.label = QtGui.QLabel(self)
         self.label.setText('0')
         #self.label.setGeometry(160, 40, 80, 30)
     def changeValue(self, value):
-        self.label.setText(str(value))
-	logger.debug("Set val="+str(value))
-    def layout(self):
-	g_layout = QtGui.QGridLayout()
-	g_layout.addWidget(self.__face_button, 0, 0)
+        self.label.setText(str(value))    
+        logger.debug("Set val="+str(value))
+    def layout(self):    
+        g_layout = QtGui.QGridLayout()    
+        g_layout.addWidget(self.__face_button, 0, 0)
         g_layout.addWidget(self.__record_button,1,0)
         g_layout.addWidget(self.__file_button, 2, 0)
         g_layout.addWidget(self.__tracking_box,3,0)
@@ -158,27 +170,40 @@ class neoHumanFaceWindow(QtGui.QWidget):
         g_layout.addWidget(self.__device,12,0)
         g_layout.addWidget(self.__quit_button,13,0)
         v_layout = QtGui.QVBoxLayout()
-        v_layout.addWidget(self.__display)
+        v_layout.addWidget(self.display)
         spacer = QtGui.QSpacerItem(10, 100, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         v_layout.addItem(spacer)
-	g_layout.addLayout(v_layout, 0, 1,12,1)
-        self.setLayout(g_layout)
-	
-	desktop = QtGui.QDesktopWidget()
+        g_layout.addLayout(v_layout, 0, 1,12,1)
+        self.setLayout(g_layout)    
+        desktop = QtGui.QDesktopWidget()
         screen_size = QtCore.QRectF(desktop.screenGeometry(desktop.primaryScreen()))
         x = screen_size.x() + screen_size.width()
         y = screen_size.y() + screen_size.height()
         self.__current_pos = [x/2., y/2.]
+
     def createTimer(self):
         self.__timer = QtCore.QTimer()
         QtCore.QObject.connect(self.__timer, QtCore.SIGNAL("timeout()"), self.update )
-        self.__timer.start( 20 )
+        #self.__timer.start( 20 )
  	
-    def update(self):
-	logger.debug("time out")
-if __name__ == "__main__":
-	app = QtGui.QApplication(argv)
+    def update(self):    
+        #logger.debug("time out")
+        pWin.display.setImage(QImageUtils.Ipl2QImage(self.__frame_grabber_file.getCvCamFrame()))
+
+    def keyPressEvent(self, event):
+        if event.key() == QtCore.Qt.Key_Escape:
+            QtCore.QCoreApplication.instance().quit()  
+        elif event.key() == QtCore.Qt.Key_Return:
+            logger.debug("key event="+str(event.key()))            
+        elif event.key() == 65:
+            logger.debug("key event="+str(event.key()))
+
+if __name__ == "__main__":    
+        app = QtGui.QApplication(argv)
         pWin = neoHumanFaceWindow("")
-	pWin.show()
-	retVal = app.exec_()
-	exit(retVal)
+        qimg = QtGui.QImage()
+        qimg.load("group.jpg")
+        pWin.display.setImage(qimg)    
+        pWin.show()    
+        retVal = app.exec_()    
+        exit(retVal)

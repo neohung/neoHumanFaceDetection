@@ -14,6 +14,7 @@
 ############################################################################
 from PyQt4 import  QtCore, QtGui
 import numpy
+import cv2 as cv
 from sys import stdin, exit, argv
 import logging
 
@@ -27,7 +28,7 @@ class QImageDisplay(QtGui.QWidget):
         super(QImageDisplay, self).__init__()
         self.__labels = []
         self.__images = []
-        for i in range(i_cols_number*i_rows_number):
+        for i in range(0, i_cols_number*i_rows_number):
             self.__images.append(0)
         self.__text_labels = []
         hbox = QtGui.QHBoxLayout()
@@ -45,6 +46,11 @@ class QImageDisplay(QtGui.QWidget):
             hbox.addLayout(vbox)
         self.setLayout(hbox)
         self.resize( 320, 240 )
+
+#        self.__images[0] = QtGui.QImage()
+#        if self.__images[0].load("group.jpg"):  
+#            self.__labels[0].setPixmap(QtGui.QPixmap.fromImage(self.__images[0]))  
+
     def setSize(self, i_width, i_height, i_index_col=0, i_index_row = 0):
         idx = i_index_col*self.__rows + i_index_row
         self.__labels[idx].resize(i_width, i_height)
@@ -163,29 +169,45 @@ class QImageDisplay(QtGui.QWidget):
         h = self.__images[idx].height()
         self.__labels[idx].setPixmap(QtGui.QPixmap.fromImage(self.__images[idx]).scaled(w,h))
 
-    def drawProbabilities(self, i_width, i_height, i_color, i_prob):
-        logger.debug("drawProbabilities")  
-    def keyPressEvent(self, event):
-        if event.key() == QtCore.Qt.Key_Escape:
-            QtCore.QCoreApplication.instance().quit()  
-        elif event.key() == QtCore.Qt.Key_Return:
-            logger.debug("key event="+str(event.key()))            
-        elif event.key() == 65:
-            logger.debug("key event="+str(event.key()))
-    def closeEvent(self, event):
-        """ Ignore Alt+F4 and [X] Botton Event""" 
-        logger.debug("can't close by [X] botton, plz use ESC")
-        event.ignore()  
+#    def keyPressEvent(self, event):
+#        if event.key() == QtCore.Qt.Key_Escape:
+#            QtCore.QCoreApplication.instance().quit()  
+#        elif event.key() == QtCore.Qt.Key_Return:
+#            logger.debug("key event="+str(event.key()))            
+#        elif event.key() == 65:
+#            logger.debug("key event="+str(event.key()))
+#    def closeEvent(self, event):
+#        """ Ignore Alt+F4 and [X] Botton Event""" 
+#        logger.debug("can't close by [X] botton, plz use ESC")
+#        event.ignore()  
 
+class ImageDisplay( QImageDisplay ):
+    """Same as image display, but with the ability to record while displaying"""
+    def __init__(self, i_file_name="out.avi",i_cols_number = 1 , i_rows_number=1,  parent = None):
+        QImageDisplay.__init__(self, i_cols_number, i_rows_number,  parent )
+
+class Ipl2QImage(QtGui.QImage): 
+    '''
+    Converting iplimage to QImage
+    '''     
+    def __init__(self, iplimage): 
+        width = iplimage.shape[1]
+        height = iplimage.shape[0]
+        #depth = iplimage.shape[2]
+        #tmpImage = np.zeros((iplimage.shape[0],iplimage.shape[1],iplimage.shape[2]), np.uint8)
+        cv2ImageRGB = cv.cvtColor(iplimage, cv.COLOR_BGR2RGB)
+        imageArray = numpy.asarray(cv2ImageRGB[:, :])
+        super(Ipl2QImage,self).__init__(imageArray.data, width, height, QtGui.QImage.Format_RGB888)
+ 
 if __name__ == "__main__":
+    import cv2 as cv
     app = QtGui.QApplication(argv)
     pWin = QImageDisplay(2,1)
     pWin.setWindowTitle(u"繪圖展示")
     #pWin.setWindowIcon(QtGui.QIcon('icon.png'))
     qimg = QtGui.QImage()
     qimg.load("group.jpg")
-    qimg2 = QtGui.QImage()
-    qimg2.load("lena.png")
+    qimg2 = Ipl2QImage(cv.imread("lena.png"))
     pWin.setImage(qimg,0,0)
     pWin.setText(0,"group.jpg")
     pWin.setImage(qimg2,1,0,0.5)
@@ -205,5 +227,6 @@ if __name__ == "__main__":
     start_point2  = numpy.atleast_2d(numpy.array([10, 200]))
     end_point2  = numpy.atleast_2d(numpy.array([200, 150]))  
     pWin.drawArrows(0,start_point2,end_point2)
+
     retVal = app.exec_()
     exit(retVal)
