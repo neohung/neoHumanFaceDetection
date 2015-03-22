@@ -188,7 +188,7 @@ class ImageDisplay( QImageDisplay ):
 
 class Ipl2QImage(QtGui.QImage): 
     '''
-    Converting iplimage to QImage
+    Converting BGR iplimage to BGR QImage
     '''     
     def __init__(self, iplimage): 
         width = iplimage.shape[1]
@@ -199,6 +199,28 @@ class Ipl2QImage(QtGui.QImage):
         imageArray = numpy.asarray(cv2ImageRGB[:, :])
         super(Ipl2QImage,self).__init__(imageArray.data, width, height, QtGui.QImage.Format_RGB888)
  
+class IplBGR2GrayQImage(QtGui.QImage): 
+    '''
+    Converting BGR iplimage to Gray QImage
+    '''     
+    def __init__(self, iplimage): 
+        width = iplimage.shape[1]
+        height = iplimage.shape[0]
+        cv2ImageGray = cv.cvtColor(iplimage, cv.COLOR_BGR2GRAY)
+        imageArray = numpy.asarray(cv2ImageGray[:, :])
+        super(IplBGR2GrayQImage,self).__init__(imageArray.data, width, height, QtGui.QImage.Format_Indexed8)
+
+class IplGray2GrayQImage(QtGui.QImage): 
+    '''
+    Converting Gray iplimage to Gray QImage
+    '''     
+    def __init__(self, iplimage): 
+        width = iplimage.shape[1]
+        height = iplimage.shape[0]
+        imageArray = numpy.asarray(iplimage[:, :])
+        super(IplGray2GrayQImage,self).__init__(imageArray.data, width, height, QtGui.QImage.Format_Indexed8)
+ 
+
 if __name__ == "__main__":
     import cv2 as cv
     app = QtGui.QApplication(argv)

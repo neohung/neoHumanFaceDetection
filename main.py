@@ -53,19 +53,19 @@ class neoHumanFaceWindow(QtGui.QWidget):
         self.__frame_grabber_file=  CamFrame()    
         self.createTimer()
     def createRecordButton(self): 
-        self.__record_button = QtGui.QPushButton(self)        #self.__record_button.setGeometry(0, 450, 80, 30)
+        self.__record_button = QtGui.QPushButton(self)        
         self.__record_button.setCheckable(True)
         self.__record_button.setObjectName("recordButton")
         self.__record_button.setText("Record")
         self.connect( self.__record_button, QtCore.SIGNAL("clicked(bool)"),  self.recordSlot )
     def createFileButton(self): 
-        self.__file_button = QtGui.QPushButton(self)    #self.__file_button.setGeometry(100, 450, 80, 30)
+        self.__file_button = QtGui.QPushButton(self)    
         self.__file_button.setCheckable(True)
         self.__file_button.setObjectName("fileButton")
         self.__file_button.setText("Display .avi")
         self.connect( self.__file_button, QtCore.SIGNAL("clicked(bool)"),  self.fileSlot )
     def createDetectButton(self): 
-        self.__face_button = QtGui.QPushButton(self)    #self.__face_button.setGeometry(200, 450, 80, 30)
+        self.__face_button = QtGui.QPushButton(self)    
         self.__face_button.setCheckable(True)
         self.__face_button.setObjectName("detectButton")
         self.__face_button.setText("Detect faces")
@@ -74,7 +74,7 @@ class neoHumanFaceWindow(QtGui.QWidget):
             #filename = QtGui.QFileDialog.getSaveFileName( self, "Select output file",os.getcwd(), "Avi Files(*.avi)")    	
             self.__record_button.setText("Recording...")  
             self.__frame_grabber_file.open(-1)
-            self.__timer.start( 20 )  
+            self.__timer.start( 0 )  
         else:    	
             self.__record_button.setText("Record")
             self.__timer.stop()
@@ -188,7 +188,11 @@ class neoHumanFaceWindow(QtGui.QWidget):
  	
     def update(self):    
         #logger.debug("time out")
-        pWin.display.setImage(QImageUtils.Ipl2QImage(self.__frame_grabber_file.getCvCamFrame()))
+        #pWin.display.setImage(QImageUtils.Ipl2QImage(self.__frame_grabber_file.getCvCamFrame()))
+        cvimg = self.__frame_grabber_file.nextCamFrame()
+        cv.putText(cvimg, "fps: %s" % (str(self.__frame_grabber_file.fps)), (10, 35), cv.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255))    
+        pWin.display.setImage(QImageUtils.Ipl2QImage(cvimg))
+        
 
     def keyPressEvent(self, event):
         if event.key() == QtCore.Qt.Key_Escape:
