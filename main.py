@@ -246,12 +246,26 @@ class  HeadTracker(object):
     def __init__(self, method,xmlfile,i_viola_scale=0.5, i_img_resize_scale=1.0):
         #self.__roi_detector = ViolaJonesRoi( i_scale= self.__params['viola_scale'])
         self.__roi_detector = ViolaJonesRoi(method,xmlfile)
+        self.pre_roi = self.roi = (0,0,0,0)
     def detectROI(self, cvimage, i_roi_scale_factor=1.2, i_track=True):
+        roi = self.__roi_detector.detectROI(cvimage)
+        if not (roi == None):
+            self.pre_roi = self.roi
+            self.roi = roi
+            return self.roi
+            #left_top_x = roi[1]
+            #left_top_y = roi[0]
+            #right_bot_x = roi[3]
+            #right_bot_y = roi[2] 
+        else:    
+            return self.pre_roi
+ 
         return self.__roi_detector.detectROI(cvimage)
 
 if __name__ == "__main__":    
         app = QtGui.QApplication(argv)
-        h = HeadTracker("webcam","haarcascade_frontalface_default.xml")
+        #haarcascade_frontalface_alt.xml, haarcascade_frontalface_default.xml
+        h = HeadTracker("webcam","haarcascade_frontalface_alt.xml")
         pWin = neoHumanFaceWindow(neo_head_tracker=h)
         qimg = QtGui.QImage()
         qimg.load("group.jpg")
