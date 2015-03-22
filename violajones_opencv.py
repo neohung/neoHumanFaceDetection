@@ -39,11 +39,14 @@ class ViolaJonesRoi(object):
             'haar_flags': 0,
             },
             'webcam': { 
-            'min_size': (30,30),
-            'window_scale':1.1,
-            'min_neighbors': 3,
-            'haar_flags': cv.cv.CV_HAAR_SCALE_IMAGE,
+            'min_size': (100,100),
+            'window_scale':1.2,
+            'min_neighbors': 2,
+            'haar_flags': cv.cv.CV_HAAR_DO_CANNY_PRUNING,
             },
+            #CV_HAAR_DO_CANNY_PRUNING
+            #CV_HAAR_SCALE_IMAGE
+            #CV_HAAR_FIND_BIGGEST_OBJECT
         }
         self.faceCascade = cv.CascadeClassifier(self.g_cascade_name)
         self.i_param = self.g_parameters[i_method]
