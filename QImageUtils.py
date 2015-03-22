@@ -16,6 +16,7 @@ from PyQt4 import  QtCore, QtGui
 import numpy
 import cv2 as cv
 from sys import stdin, exit, argv
+import struct
 import logging
 
 logging.basicConfig(level=logging.DEBUG)
@@ -71,7 +72,7 @@ class QImageDisplay(QtGui.QWidget):
     def setText(self, col_index=0, i_text=None):
         if not( i_text == None):
             self.__text_labels[col_index].setText(i_text)
-    def drawRectangleRaw( self, idx, i_min_row, i_min_col, i_max_row, i_max_col, i_pen_width=2,i_color=QtGui.QColor("red")):
+    def drawRectangleRaw( self, idx, (i_min_row, i_min_col, i_max_row, i_max_col), i_pen_width=2,i_color=QtGui.QColor("red")):
         """Overlay a red rectangle on the input image"""
         rect = QtCore.QRect(i_min_col, i_min_row, i_max_col-i_min_col, i_max_row-i_min_row)
         painter = QtGui.QPainter( self.__images[idx] )
@@ -220,6 +221,73 @@ class IplGray2GrayQImage(QtGui.QImage):
         imageArray = numpy.asarray(iplimage[:, :])
         super(IplGray2GrayQImage,self).__init__(imageArray.data, width, height, QtGui.QImage.Format_Indexed8)
  
+class QImage2Ipl(numpy.ndarray): 
+    '''
+    Converting  QImage to iplimage
+    '''     
+    def __new__(self, qimage):
+        width = qimage.width()
+        height = qimage.height()
+        linebytes = width * 4
+        cvimg = numpy.empty((height,width,3), numpy.uint8)
+        for y in xrange(height):
+            pixels = qimage.scanLine(y).asstring(linebytes);
+            for x in xrange(width):
+                color = struct.unpack('I', pixels[x*4:x*4+4])[0];
+                r = QtGui.qRed(color);
+                g = QtGui.qGreen(color); 
+                b = QtGui.qBlue(color);
+                cvimg.itemset(y, x, 0, b)
+                cvimg.itemset(y, x, 1, g)
+                cvimg.itemset(y, x, 2, r) 
+        return cvimg
+
+class QImage2GrayIpl(numpy.ndarray): 
+    '''
+    Converting QImage to Gray iplimage
+    '''     
+    def __new__(self, qimage):
+        width = qimage.width()
+        height = qimage.height()
+        qptr = qimage.bits()
+        qptr.setsize(qimage.byteCount())
+        arr = numpy.asarray(qptr).reshape(height, width, 4)
+        cvgrayimg = numpy.empty((height,width,1), numpy.uint8)
+        for y in xrange(height):
+            for x in xrange(width):
+                r = arr[y,x,0]
+                g = arr[y,x,1]
+                b = arr[y,x,2]
+                #a = arr[y,x,3]
+                gray = (r*19595 + g*38469 + b*7472) >> 16
+                cvgrayimg.itemset(y, x, 0, gray)       
+        return cvgrayimg
+
+class QImage2GrayIplFast(numpy.ndarray): 
+    '''
+    Converting QImage to Gray iplimage
+    '''     
+    def __new__(self, qimage):
+        cvimage = QImage2Ipl(qimage)
+        cv2ImageGray = cv.cvtColor(cvimage, cv.COLOR_BGR2GRAY)
+        return cv2ImageGray
+
+class QImageGray2GrayIpl(numpy.ndarray): 
+    '''
+    Converting Gray QImage to Gray iplimage
+    '''     
+    def __new__(self, qimage):
+        width = qimage.width()
+        height = qimage.height()
+        qptr = qimage.bits()
+        qptr.setsize(qimage.byteCount())
+        arr = numpy.asarray(qptr).reshape(height, width, 1)
+        cvgrayimg = numpy.empty((height,width,1), numpy.uint8)
+        for y in xrange(height):
+            for x in xrange(width):
+                cvgrayimg.itemset(y, x, 0,arr[y,x])       
+        return cvgrayimg
+
 
 if __name__ == "__main__":
     import cv2 as cv
@@ -238,7 +306,7 @@ if __name__ == "__main__":
     r = QtCore.QRect(200, 120, 50, 50)
     pWin.show()
     pWin.drawRectangle(0,r,1)
-    pWin.drawRectangleRaw(1,100,100,200,200,1)
+    pWin.drawRectangleRaw(1,(100,100,200,200),1)
     pWin.drawImage(0,pWin.getImages()[1],250,200);
     start_point  = numpy.atleast_2d(numpy.array([10, 10]))
     end_point  = numpy.atleast_2d(numpy.array([200, 150]))  

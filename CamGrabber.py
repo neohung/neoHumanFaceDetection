@@ -63,7 +63,6 @@ if __name__ ==  "__main__":
     import struct
     import ctypes
 
-
     timer = QtCore.QTimer()
     app = QtGui.QApplication(argv)
     display =  QImageUtils.ImageDisplay()
@@ -77,16 +76,9 @@ if __name__ ==  "__main__":
         cvimg = display.c.nextCamFrame()
         cv.putText(cvimg, "fps: %s" % (str(display.c.fps)), (10, 35), cv.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255))
         if (cvimg != None):
-            #qimg_gray = QImageUtils.IplGray2GrayQImage(cvimg)
-            qimg_gray = QImageUtils.IplBGR2GrayQImage(cvimg)
-            qptr = qimg_gray.bits()
-            for y in range(0,height):
-                pixels = qimg_gray.scanLine(y).asstring(1)
-                for x in range(0,width):
-                    pass
-                    #color = struct.unpack('I', pixels[x])[0];
-                    #display.tmpimage.setPixel(x,y,QtGui.qRgb(1,1,1))
-            display.setImage(qimg_gray)    
+            qimg = QImageUtils.Ipl2QImage(cvimg)
+            #qimg_gray = QImageUtils.IplBGR2GrayQImage(cvimg)
+            display.setImage(qimg)    
     display.setImage(QImageUtils.Ipl2QImage(cv.imread("lena.png")))    
     display.show()  
     QtCore.QObject.connect(timer, QtCore.SIGNAL("timeout()"), updateDisplay )
