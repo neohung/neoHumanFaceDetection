@@ -89,7 +89,7 @@ class neoHumanFaceWindow(QtGui .QWidget):
     def capturePic(self):
 	print "capture now"
 	#self.faceCascade = cv.CascadeClassifier("haarcascade_frontalface_alt.xml")
-	self.faceCascade = cv.CascadeClassifier("haarcascade_frontalface_default.xml")
+	self.faceCascade = cv.CascadeClassifier("haarcascade_frontalface_alt.xml")
         self.camera = cv.VideoCapture()
         self.camera.open(-1)
 	#ret, frame = self.camera.read()
@@ -100,7 +100,7 @@ class neoHumanFaceWindow(QtGui .QWidget):
         QtCore.QObject.connect(self.__timer, QtCore.SIGNAL("timeout()"), self.update )
         self.__timer.start( 1 )
     def SwitchPic(self):
- 	self.image = Ipl2QImage(cv.imread('test3.jpg'))
+ 	self.image = Ipl2QImage(cv.imread('lena.png'))
 	self.piclabel.setPixmap(QtGui.QPixmap.fromImage(self.image))
 
 if __name__ == "__main__":
