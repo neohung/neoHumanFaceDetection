@@ -37,20 +37,20 @@ class neoHumanFaceWindow(QtGui.QWidget):
     def initUI(self):
         self.setGeometry(300, 300, 640, 480)
         self.setWindowTitle('neoHumanFace Window')
-        self.detect_now = False
+        self.showDetect = False
         self.cam_index = -1
         desktop = QtGui.QDesktopWidget()
         self.screen_size = QtCore.QRectF(desktop.screenGeometry(desktop.primaryScreen()))
             
         #self.__display =  qt_image_display.ImageDisplayAndRecord()    
-        self.display =  QImageUtils.QImageDisplay()    
+        self.display =  QImageUtils.QImageDisplay(1,2)    
         self.createCamButton()    
         self.createFileButton()    
         self.createDetectButton()    
         self.createTrackingCheckBox()    
         self.createActivateCheckBox()    
         self.createScrollBar()    
-        #self.createScaleSelectDoubleSpinBox()    
+        self.createScaleSelectDoubleSpinBox()    
         self.createDeviceComboBox()    
         self.createQuitButton()    
         #self.createButton()    
@@ -76,7 +76,7 @@ class neoHumanFaceWindow(QtGui.QWidget):
         self.__face_button = QtGui.QPushButton(self)    
         self.__face_button.setCheckable(True)
         self.__face_button.setObjectName("detectButton")
-        self.__face_button.setText("Detect faces")
+        self.__face_button.setText("Preview detect window")
         self.connect( self.__face_button, QtCore.SIGNAL("clicked(bool)"),  self.detectSlot )
     def camSlot(self, checked):    
         if checked:    	
@@ -97,9 +97,9 @@ class neoHumanFaceWindow(QtGui.QWidget):
             self.__file_button.setText("Display .avi")
     def detectSlot(self, checked):    
         if checked:
-            self.detect_now = True
+            self.showDetect = True
         else:     
-            self.detect_now = False
+            self.showDetect = False
 
     def createTrackingCheckBox(self):
         self.__tracking_box = QtGui.QCheckBox()
@@ -170,7 +170,6 @@ class neoHumanFaceWindow(QtGui.QWidget):
         #self.label.setGeometry(160, 40, 80, 30)
     def changeScrollbarGainX(self, value):
         self.__label_gain_x.setText(QtCore.QString("X gain: "+ str(value)))
-        #self.__label_gain_y.setText(QtCore.QString("Y gain: "+ str(self.__scrollbar_gain_y.value())))
     def changeScrollbarGainY(self, value):
         self.__label_gain_y.setText(QtCore.QString("Y gain: "+ str(value)))
 
@@ -188,8 +187,8 @@ class neoHumanFaceWindow(QtGui.QWidget):
         g_layout.addWidget(self.__scrollbar_gain_x),6,0
         g_layout.addWidget(self.__label_gain_y,7,0)
         g_layout.addWidget(self.__scrollbar_gain_y,8,0)
-        #g_layout.addWidget(self.__scale_label,9,0)
-        #g_layout.addWidget(self.__scale_select,10,0)
+        g_layout.addWidget(self.__scale_label,9,0)
+        g_layout.addWidget(self.__scale_select,10,0)
         g_layout.addWidget(self.__device_label,11,0)
         g_layout.addWidget(self.__device,12,0)
         g_layout.addWidget(self.__quit_button,13,0)
@@ -219,12 +218,13 @@ class neoHumanFaceWindow(QtGui.QWidget):
         logger.debug(self.cam_index)
 
     def update(self):
+        scale = self.__scale_select.value()
         gain_x = float(self.__scrollbar_gain_x.value())
         gain_y = float(self.__scrollbar_gain_y.value())
         cvimg = self.__frame_grabber_file.nextCamFrame()
         cv.putText(cvimg, "fps: %s" % (str(self.__frame_grabber_file.fps)), (10, 35), cv.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255))    
-        if(self.detect_now):
-            roi = self.tracker.detectROI(cvimg)
+        if(self.__tracking_box.isChecked()):
+            roi = self.tracker.detectROI(cvimg,scale)
             if not (roi == None):
                 left_top_x = roi[1]
                 left_top_y = roi[0]
@@ -232,6 +232,8 @@ class neoHumanFaceWindow(QtGui.QWidget):
                 right_bot_y = roi[2]     
                 cv.rectangle(cvimg, (left_top_x, left_top_y), (right_bot_x, right_bot_y), (0, 255, 0), 2)
         self.display.setImage(QImageUtils.Ipl2QImage(cvimg))
+        if (self.showDetect):
+            self.display.setImage(QImageUtils.IplGray2GrayQImage(self.tracker.roiimage),0,1)
 
     def keyPressEvent(self, event):
         if event.key() == QtCore.Qt.Key_Escape:
@@ -243,13 +245,19 @@ class neoHumanFaceWindow(QtGui.QWidget):
 
 
 class  HeadTracker(object):
-    def __init__(self, method,xmlfile,i_viola_scale=0.5, i_img_resize_scale=1.0):
+    def __init__(self, method,xmlfile):
         #self.__roi_detector = ViolaJonesRoi( i_scale= self.__params['viola_scale'])
         self.__roi_detector = ViolaJonesRoi(method,xmlfile)
         self.pre_roi = self.roi = (0,0,0,0)
-    def detectROI(self, cvimage, i_roi_scale_factor=1.2, i_track=True):
-        roi = self.__roi_detector.detectROI(cvimage)
+    def detectROI(self, cvimage, i_img_resize_scale=1.0):
+        gray = cv.cvtColor(cvimage, cv.COLOR_BGR2GRAY)
+        new_width, new_height = int(round(gray.shape[1]*i_img_resize_scale)), int(round(gray.shape[0]*i_img_resize_scale))
+        smallgray = cv.resize(gray, (new_width, new_height), interpolation = cv.INTER_AREA)
+        equalize_smallgray = cv.equalizeHist(smallgray)
+        self.roiimage = equalize_smallgray
+        roi = self.__roi_detector.detectROI(equalize_smallgray)
         if not (roi == None):
+            roi = (int(round(roi[0]/i_img_resize_scale)),int(round(roi[1]/i_img_resize_scale)),int(round(roi[2]/i_img_resize_scale)),int(round(roi[3]/i_img_resize_scale)))
             self.pre_roi = self.roi
             self.roi = roi
             return self.roi
@@ -260,7 +268,7 @@ class  HeadTracker(object):
         else:    
             return self.pre_roi
  
-        return self.__roi_detector.detectROI(cvimage)
+        return self.__roi_detector.detectROI(equalize_smallgray)
 
 if __name__ == "__main__":    
         app = QtGui.QApplication(argv)

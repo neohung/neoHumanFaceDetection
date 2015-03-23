@@ -39,7 +39,7 @@ class ViolaJonesRoi(object):
             'haar_flags': 0,
             },
             'webcam': { 
-            'min_size': (100,100),
+            'min_size': (30,30),
             'window_scale':1.2,
             'min_neighbors': 2,
             'haar_flags': cv.cv.CV_HAAR_DO_CANNY_PRUNING,
@@ -50,9 +50,8 @@ class ViolaJonesRoi(object):
         }
         self.faceCascade = cv.CascadeClassifier(self.g_cascade_name)
         self.i_param = self.g_parameters[i_method]
-    def detectROI(self, cvimage):
-        gray = cv.cvtColor(cvimage, cv.COLOR_BGR2GRAY)
-        faceRects = self.faceCascade.detectMultiScale(gray,scaleFactor=self.i_param['window_scale'],minNeighbors=self.i_param['min_neighbors'], minSize=self.i_param['min_size'],flags=self.i_param['haar_flags'])
+    def detectROI(self, cvgrayimage):
+        faceRects = self.faceCascade.detectMultiScale(cvgrayimage,scaleFactor=self.i_param['window_scale'],minNeighbors=self.i_param['min_neighbors'], minSize=self.i_param['min_size'],flags=self.i_param['haar_flags'])
         if not (faceRects == None):
             max_size = 0
             best_face = None
@@ -66,8 +65,6 @@ class ViolaJonesRoi(object):
         return None
 
 if __name__ == "__main__":
-    import image_utils
-    import qt_image_display
     from PyQt4 import QtCore, QtGui
     from sys import stdin, exit, argv
     import numpy
@@ -81,7 +78,8 @@ if __name__ == "__main__":
     qimg = QtGui.QImage()
     qimg.load("lena.png")
     cvimage = QImageUtils.QImage2Ipl(qimg)
-    roi = vj.detectROI(cvimage)
+    gray = cv.cvtColor(cvimage, cv.COLOR_BGR2GRAY)
+    roi = vj.detectROI(gray)
     display.setImage(qimg) 
     display.drawRectangleRaw(0,roi)
     display.show()    

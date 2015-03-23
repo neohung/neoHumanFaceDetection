@@ -74,9 +74,11 @@ if __name__ ==  "__main__":
     height, width = firstcvimg.shape[:2]
     def updateDisplay():
         cvimg = display.c.nextCamFrame()
+        cv2ImageGray = cv.cvtColor(cvimg, cv.COLOR_BGR2GRAY)
+        cvimg = cv.equalizeHist(cv2ImageGray)
         cv.putText(cvimg, "fps: %s" % (str(display.c.fps)), (10, 35), cv.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255))
-        if (cvimg != None):
-            qimg = QImageUtils.Ipl2QImage(cvimg)
+        if not (cvimg == None):
+            qimg = QImageUtils.IplGray2GrayQImage(cvimg)
             #qimg_gray = QImageUtils.IplBGR2GrayQImage(cvimg)
             display.setImage(qimg)    
     display.setImage(QImageUtils.Ipl2QImage(cv.imread("lena.png")))    
