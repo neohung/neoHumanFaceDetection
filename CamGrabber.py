@@ -33,6 +33,7 @@ class CamFrame(object):
         self.nextCamFrame()
     def nextCamFrame(self):
         ret, self.currentFrame = self.camera.read()
+        self.currentFrame = cv.flip(self.currentFrame, 1)
         self.frame_cnt += 1
         currectTime = time.time() 
         diffTime = currectTime - self.lastTime
