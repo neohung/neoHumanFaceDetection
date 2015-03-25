@@ -1,10 +1,16 @@
 import numpy as np
-import Image
+#import Image
 import cv2 as cv
 import os
 from PyQt4 import QtCore, QtGui
 import time
 from sys import stdin, exit , argv
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger( __name__ )
+#logger.debug(....)
+
 
 class Ipl2QImage(QtGui.QImage): 
     '''
@@ -104,10 +110,17 @@ class neoHumanFaceWindow(QtGui .QWidget):
 	self.piclabel.setPixmap(QtGui.QPixmap.fromImage(self.image))
 
 if __name__ == "__main__":
-        app = QtGui. QApplication(argv )
-        pWin = neoHumanFaceWindow()
-	pWin.show()
-        retVal = app. exec_()
-        exit (retVal)
+    import ReadHaarcascade
+    a = ReadHaarcascade.readXml("haarcascade_frontalface_alt.xml")
+    print "x: "+ str(a.stage[1].tree[12].feature.rect[2].x)
+    print "y: "+ str(a.stage[1].tree[12].feature.rect[2].y)
+    print "w: "+ str(a.stage[1].tree[12].feature.rect[2].w)
+    print "h: "+ str(a.stage[1].tree[12].feature.rect[2].h)
+    print "weight: "+ str(a.stage[1].tree[12].feature.rect[2].weight) 
+    app = QtGui.QApplication(argv )
+    pWin = neoHumanFaceWindow()
+    pWin.show()
+    retVal = app. exec_()
+    exit (retVal)
  
 
