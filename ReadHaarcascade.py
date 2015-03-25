@@ -58,8 +58,8 @@ class readXml(object):
                                         r = rect.text.split(" ")
                                         self.stage[stage_i].tree[tree_i].feature.rect[rect_i].x = Decimal(r[0])
                                         self.stage[stage_i].tree[tree_i].feature.rect[rect_i].y = Decimal(r[1])
-                                        self.stage[stage_i].tree[tree_i].feature.rect[rect_i].h = Decimal(r[2])
-                                        self.stage[stage_i].tree[tree_i].feature.rect[rect_i].w = Decimal(r[3])
+                                        self.stage[stage_i].tree[tree_i].feature.rect[rect_i].w = Decimal(r[2])
+                                        self.stage[stage_i].tree[tree_i].feature.rect[rect_i].h = Decimal(r[3])
                                         self.stage[stage_i].tree[tree_i].feature.rect[rect_i].weight = Decimal(r[4])
                                         #print "s"+str(stage_i)+",t"+str(tree_i)+",r"+ str(rect_i)+") rect: "+ rect.text
                                         rect_i=rect_i+1

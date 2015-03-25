@@ -295,7 +295,9 @@ class neoHumanFaceWindow(QtGui.QWidget):
 
     def calImageStageVal(self, cvimage, stage):
         sum_p = 0
+        #count = 0
         for tree in stage.tree:
+            #count = count+1
             threshold = tree.threshold
             left_val = tree.left_val
             right_val = tree.right_val
@@ -305,6 +307,7 @@ class neoHumanFaceWindow(QtGui.QWidget):
             else:
                 sum_p = sum_p + left_val
         #logger.debug(str(sum_p))
+        #logger.debug(count)
         return sum_p
     def calImageRectThreshold(self,cvimage,rects):
         sum_p = 0
@@ -327,10 +330,13 @@ class neoHumanFaceWindow(QtGui.QWidget):
         for y in range(y1,y2):
             for x in range(x1,x2):
                 count = count + 1
+                #logger.debug(cvimage[y, x])
                 sum_val = sum_val + cvimage[y, x]
-        if (count == 0):
-            return 0
-        sum_val =  Decimal(sum_val) / Decimal((255*count))
+        #if (count == 0):
+        #    return 0
+        #logger.debug(str(sum_val/count))
+        sum_val =  Decimal(sum_val) / Decimal((count))
+        #logger.debug(str(sum_val))
         return sum_val
 
     def keyPressEvent(self, event):
